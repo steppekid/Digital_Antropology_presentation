@@ -318,6 +318,11 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 300; }
 .refs p { break-inside: avoid; margin-bottom: .6em; }
 .refs i { color: var(--ink); }
 
+.qs { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 1.8); margin-top: calc(var(--u) * 3.5); }
+.qs .card { display: grid; grid-template-columns: calc(var(--u) * 5) 1fr; align-items: start; }
+.qs .n { font-family: var(--serif); font-style: italic; font-size: calc(var(--u) * 3.6); line-height: .9; color: var(--coral); }
+.qs h3 { font-size: calc(var(--u) * 2.3); line-height: 1.15; margin-bottom: .5em; }
+
 /* glossary overlay */
 #gloss { position: fixed; inset: 0; z-index: 80; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(18px); display: flex; flex-direction: column; justify-content: center; padding: 0 calc(var(--u) * 9); visibility: hidden; opacity: 0; }
 #gloss .x { position: absolute; top: calc(var(--u) * 3); right: calc(var(--u) * 4); }
@@ -876,6 +881,17 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 300; }
 <section class="slide finale" data-theme="dark" data-wave="swell" data-ch="6" data-speaker="mate">
   <div class="eyebrow" data-a>Final idea</div>
   <p class="quote split">The AI's voice becomes the power of <em>technological omnipresence,</em> both frightening and fascinating.</p>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="6" data-speaker="both">
+  <div class="eyebrow" data-a>Discussion</div>
+  <h2 class="headline sm split">Let's <em>discuss.</em></h2>
+  <div class="qs">
+    <div class="card" data-a><div class="n">1</div><div><h3>Would the film feel different if Samantha had a <em>male</em> voice?</h3><div class="mono">Would we still see it as a love story?</div></div></div>
+    <div class="card" data-a><div class="n">2</div><div><h3>Could you fall in love with someone you <em>only hear,</em> never see?</h3><div class="mono">Think of long phone calls and voice messages</div></div></div>
+    <div class="card" data-a><div class="n">3</div><div><h3>Why do Siri, Alexa and most voice assistants sound like <em>women?</em></h3><div class="mono">Helpful, polite, always available</div></div></div>
+    <div class="card" data-a><div class="n">4</div><div><h3>In the end, is Samantha <em>powerful,</em> or just there to serve Theodore?</h3><div class="mono">Or can she be both?</div></div></div>
+  </div>
 </section>
 
 <section class="slide finale" data-theme="dark" data-wave="low" data-ch="6" data-speaker="both">
