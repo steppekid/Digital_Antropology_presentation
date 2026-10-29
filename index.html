@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>her — The Gendered AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+@property --bg   { syntax: '<color>'; inherits: true; initial-value: #120b0a; }
+@property --ink  { syntax: '<color>'; inherits: true; initial-value: #f6e9e1; }
+@property --mute { syntax: '<color>'; inherits: true; initial-value: #b49c93; }
+@property --line { syntax: '<color>'; inherits: true; initial-value: rgba(246,233,225,.16); }
+@property --card { syntax: '<color>'; inherits: true; initial-value: rgba(255,255,255,.04); }
+
+:root {
+  --u: min(1vw, 1.7778vh);
+  --coral: #e0533d;
+  --peach: #f0a37f;
+  --rose: #d9435b;
+  --kai: #e8945a;
+  --mate: #d9435b;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+body.light { --bg: #f4eae1; --ink: #2a1714; --mute: #7d6159; --line: rgba(42,23,20,.14); --card: rgba(255,255,255,.45); }
+body.dark  { --bg: #120b0a; --ink: #f6e9e1; --mute: #b49c93; --line: rgba(246,233,225,.16); --card: rgba(255,255,255,.04); }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-weight: 300;
+  font-size: calc(var(--u) * 1.35); line-height: 1.5;
+  transition: --bg 1.2s ease, --ink 1.2s ease, --mute 1.2s ease, --line 1.2s ease, --card 1.2s ease;
+  cursor: none; -webkit-font-smoothing: antialiased;
+}
+em { font-style: italic; color: var(--coral); }
+body.dark em { color: #f0735c; }
+
+/* ---------- atmosphere ---------- */
+#wave { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+.blob { position: fixed; z-index: 0; border-radius: 50%; filter: blur(calc(var(--u) * 7)); pointer-events: none; opacity: .55; will-change: transform; transition: opacity 2s; }
+body.blackout .blob { opacity: 0; }
+.blob.b1 { width: 55vw; height: 55vw; background: radial-gradient(circle, #f6b08f 0%, transparent 65%); left: -10vw; top: -20vw; }
+.blob.b2 { width: 45vw; height: 45vw; background: radial-gradient(circle, #e0533d 0%, transparent 65%); right: -12vw; bottom: -18vw; opacity: .35; }
+.blob.b3 { width: 35vw; height: 35vw; background: radial-gradient(circle, #f3c7b5 0%, transparent 65%); left: 40vw; top: 30vh; opacity: .4; }
+body.dark .blob { opacity: .14; }
+.grain {
+  position: fixed; inset: -50%; z-index: 60; pointer-events: none; opacity: .09;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain .9s steps(6) infinite;
+}
+@keyframes grain { 0%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)} 40%{transform:translate(2%,-3%)} 60%{transform:translate(-2%,-1%)} 80%{transform:translate(3%,3%)} 100%{transform:translate(0,0)} }
+.letterbox { position: fixed; left: 0; right: 0; height: 0; background: #000; z-index: 25; pointer-events: none; }
+.letterbox.top { top: 0; } .letterbox.bot { bottom: 0; }
+
+#cursor { position: fixed; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; border: 1px solid var(--coral); border-radius: 50%; z-index: 100; pointer-events: none; mix-blend-mode: normal; transition: width .3s, height .3s, margin .3s, background .3s; }
+#cursor::after { content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: var(--coral); }
+#cursor.hover { width: 60px; height: 60px; margin: -30px 0 0 -30px; background: rgba(224,83,61,.12); }
+
+/* ---------- chrome ---------- */
+header.chrome {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: calc(var(--u) * 2.2) calc(var(--u) * 4);
+  font-family: var(--mono); font-size: calc(var(--u) * .78); letter-spacing: .14em; text-transform: uppercase; color: var(--mute);
+}
+header.chrome .brand { display: flex; gap: 1.2em; align-items: center; }
+header.chrome .brand b { font-family: var(--sans); font-weight: 300; text-transform: lowercase; font-size: 2em; letter-spacing: .02em; color: var(--ink); }
+.speaker { display: flex; align-items: center; gap: .9em; padding: .7em 1.3em; border: 1px solid var(--line); border-radius: 99px; background: var(--card); backdrop-filter: blur(10px); overflow: hidden; }
+.speaker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--kai); box-shadow: 0 0 0 0 currentColor; animation: live 2s infinite; }
+@keyframes live { 0%{box-shadow:0 0 0 0 rgba(224,83,61,.5)} 70%{box-shadow:0 0 0 10px rgba(224,83,61,0)} 100%{box-shadow:0 0 0 0 rgba(224,83,61,0)} }
+.speaker .name { color: var(--ink); display: inline-block; min-width: 6em; }
+
+nav.chapters {
+  position: fixed; left: calc(var(--u) * 4); right: calc(var(--u) * 4); bottom: calc(var(--u) * 2); z-index: 30;
+  display: flex; gap: calc(var(--u) * 1); align-items: flex-end;
+  font-family: var(--mono); font-size: calc(var(--u) * .72); letter-spacing: .1em; text-transform: uppercase;
+}
+nav .group { display: flex; flex-direction: column; gap: .8em; }
+nav .group.kai { flex: 4; } nav .group.mate { flex: 3; }
+nav .group > span { color: var(--mute); opacity: .7; }
+nav .group > span i { font-style: normal; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: .8em; vertical-align: middle; }
+nav .group.kai > span i { background: var(--kai); } nav .group.mate > span i { background: var(--mate); }
+nav .row { display: flex; gap: calc(var(--u) * 1); }
+nav .item { flex: 1; cursor: none; color: var(--mute); transition: color .4s; }
+nav .item .bar { height: 2px; background: var(--line); margin-bottom: .8em; position: relative; overflow: hidden; }
+nav .item .bar b { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0); background: var(--ink); }
+nav .group.kai .item.active .bar b { background: var(--kai); } nav .group.mate .item.active .bar b { background: var(--mate); }
+nav .item.active { color: var(--ink); }
+nav .item.done .bar b { transform: scaleX(1) !important; opacity: .45; }
+.counter { position: fixed; right: calc(var(--u) * 4); top: 50%; transform: translateY(-50%) rotate(90deg); transform-origin: right center; z-index: 30; font-family: var(--mono); font-size: calc(var(--u) * .72); letter-spacing: .2em; color: var(--mute); }
+.hide-chrome header.chrome, .hide-chrome nav.chapters, .hide-chrome .counter { opacity: 0; pointer-events: none; }
+header.chrome, nav.chapters, .counter { transition: opacity .8s; }
+
+/* ---------- slides ---------- */
+.slide {
+  position: fixed; inset: 0; z-index: 10; visibility: hidden; opacity: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: calc(var(--u) * 8) calc(var(--u) * 9) calc(var(--u) * 7.5);
+}
+.eyebrow { font-family: var(--mono); font-size: calc(var(--u) * .82); letter-spacing: .22em; text-transform: uppercase; color: var(--coral); margin-bottom: calc(var(--u) * 2); display: flex; align-items: center; gap: 1.2em; }
+.eyebrow::before { content: ''; width: calc(var(--u) * 3); height: 1px; background: currentColor; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 300; }
+.headline { font-size: calc(var(--u) * 5.6); line-height: 1.02; letter-spacing: -.015em; max-width: 18em; }
+.headline.sm { font-size: calc(var(--u) * 4.4); }
+.lead { font-size: calc(var(--u) * 1.6); color: var(--mute); max-width: 38em; margin-top: calc(var(--u) * 2.2); line-height: 1.55; }
+.lead strong, p strong { color: var(--ink); font-weight: 400; }
+.mono { font-family: var(--mono); font-size: calc(var(--u) * .78); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+.cols { display: grid; gap: calc(var(--u) * 4); margin-top: calc(var(--u) * 4); }
+.c2 { grid-template-columns: 1fr 1fr; } .c3 { grid-template-columns: repeat(3, 1fr); }
+.card { border: 1px solid var(--line); background: var(--card); backdrop-filter: blur(14px); border-radius: calc(var(--u) * 1.2); padding: calc(var(--u) * 2.4); }
+.card h3 { font-size: calc(var(--u) * 2.4); line-height: 1.1; margin-bottom: .4em; }
+.card p { color: var(--mute); }
+.quote { font-family: var(--serif); font-style: italic; font-size: calc(var(--u) * 2.3); line-height: 1.25; }
+.quote cite { display: block; margin-top: .8em; font-family: var(--mono); font-style: normal; font-size: calc(var(--u) * .78); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+.rule { height: 1px; background: var(--line); margin: calc(var(--u) * 3) 0; transform-origin: left; }
+.w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .12em; margin-bottom: -.12em; }
+.c { display: inline-block; will-change: transform; }
+
+/* title */
+.title-her { font-family: var(--sans); font-weight: 200; font-size: calc(var(--u) * 22); line-height: .9; letter-spacing: -.02em; text-transform: lowercase; text-align: center; }
+.intro { align-items: center; text-align: center; }
+.intro .sub { font-family: var(--serif); font-style: italic; font-size: calc(var(--u) * 2.4); margin-top: calc(var(--u) * 1); }
+.intro .sub2 { font-family: var(--serif); font-size: calc(var(--u) * 1.7); color: var(--mute); }
+.intro .meta { margin-top: calc(var(--u) * 6); display: flex; gap: calc(var(--u) * 4); justify-content: center; }
+.intro .hint { position: absolute; bottom: calc(var(--u) * 3.5); left: 0; right: 0; text-align: center; }
+.intro .hint kbd { font-family: var(--mono); border: 1px solid var(--line); border-radius: 6px; padding: .15em .6em; margin: 0 .3em; color: var(--ink); }
+.listening { display: inline-flex; align-items: center; gap: .8em; position: absolute; top: calc(var(--u) * 4); left: 0; right: 0; justify-content: center; }
+.listening::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--coral); animation: blink 1.4s infinite; }
+@keyframes blink { 50% { opacity: .15; } }
+
+/* chapter cards */
+.chapter { justify-content: center; }
+.chapter .num { position: absolute; right: calc(var(--u) * 6); top: 50%; transform: translateY(-52%); font-family: var(--serif); font-weight: 300; font-size: calc(var(--u) * 42); line-height: 1; color: transparent; -webkit-text-stroke: 1px var(--line); letter-spacing: -.04em; pointer-events: none; }
+.chapter .num span { -webkit-text-stroke: 1px color-mix(in srgb, var(--coral) 55%, transparent); }
+.chapter h2 { font-size: calc(var(--u) * 10); line-height: .95; font-style: italic; letter-spacing: -.02em; }
+.chapter .sub { font-family: var(--serif); font-size: calc(var(--u) * 2.6); color: var(--mute); margin-top: calc(var(--u) * 1.5); }
+.chapter .by { margin-top: calc(var(--u) * 5); display: flex; align-items: center; gap: 1em; }
+.chapter .by i { width: 9px; height: 9px; border-radius: 50%; background: var(--kai); }
+.chapter.mate .by i { background: var(--mate); }
+.chapter .note { margin-top: 1.4em; }
+
+/* premise */
+.people { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 4); margin-top: calc(var(--u) * 4); }
+.person { display: grid; grid-template-columns: calc(var(--u) * 13) 1fr; gap: calc(var(--u) * 2.4); align-items: center; }
+.portrait { aspect-ratio: 3/4; border-radius: calc(var(--u) * 1); position: relative; overflow: hidden; }
+.portrait.seen { background: linear-gradient(160deg, #f6b08f, #e0533d 60%, #8f2a1f); }
+.portrait.seen::after { content: ''; position: absolute; left: 50%; top: 26%; width: 34%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: rgba(255,240,230,.35); box-shadow: 0 calc(var(--u)*7) 0 calc(var(--u)*3) rgba(255,240,230,.25); }
+.portrait.unseen { border: 1px dashed color-mix(in srgb, var(--coral) 60%, transparent); display: grid; place-items: center; }
+.portrait.unseen svg { width: 80%; }
+.person h3 { font-size: calc(var(--u) * 3.2); line-height: 1; }
+.person .role { margin: .6em 0 1em; }
+.person p { color: var(--mute); }
+.tag { display: inline-block; font-family: var(--mono); font-size: calc(var(--u) * .7); letter-spacing: .16em; text-transform: uppercase; padding: .45em 1em; border-radius: 99px; border: 1px solid var(--line); margin-top: 1em; }
+.tag.hot { border-color: var(--coral); color: var(--coral); }
+
+/* fork */
+.fork { display: grid; grid-template-columns: 1fr auto 1fr; gap: calc(var(--u) * 3); align-items: stretch; margin-top: calc(var(--u) * 5); }
+.fork .or { align-self: center; font-family: var(--serif); font-style: italic; font-size: calc(var(--u) * 3); color: var(--coral); }
+.fork .card h3 { font-style: italic; }
+
+/* timeline */
+.timeline { margin-top: calc(var(--u) * 5); position: relative; height: calc(var(--u) * 9); }
+.timeline .track { position: absolute; left: 0; right: 0; top: calc(var(--u) * 3); height: 2px; background: var(--line); }
+.timeline .silent { position: absolute; left: 0; width: 27%; top: calc(var(--u) * 2.5); height: calc(var(--u) * 1.1); background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 9px); opacity: .5; transform-origin: left; }
+.timeline .sound { position: absolute; left: 27%; right: 0; top: calc(var(--u) * 2.2); height: calc(var(--u) * 1.6); transform-origin: left; }
+.timeline .sound svg { width: 100%; height: 100%; }
+.timeline .mark { position: absolute; top: calc(var(--u) * 4.8); font-family: var(--mono); font-size: calc(var(--u) * .75); letter-spacing: .12em; color: var(--mute); text-transform: uppercase; }
+.timeline .mark b { display: block; font-family: var(--serif); font-weight: 400; font-size: calc(var(--u) * 2); color: var(--ink); letter-spacing: 0; text-transform: none; }
+
+/* bars */
+.bars { margin-top: calc(var(--u) * 5); display: grid; gap: calc(var(--u) * 2.6); max-width: 70%; }
+.bars .lbl { display: flex; justify-content: space-between; margin-bottom: .7em; }
+.bars .b { height: calc(var(--u) * 2.4); border-radius: 99px; background: var(--ink); transform-origin: left; }
+.bars .b.voice { width: 12%; background: var(--coral); }
+
+/* venn */
+.venn { position: relative; height: calc(var(--u) * 30); margin-top: calc(var(--u) * 2); }
+.venn .circ { position: absolute; top: 0; width: calc(var(--u) * 30); height: calc(var(--u) * 30); border-radius: 50%; border: 1px solid var(--ink); display: flex; flex-direction: column; justify-content: center; padding: calc(var(--u) * 4); }
+.venn .circ.l { left: calc(50% - var(--u) * 25); align-items: flex-start; background: radial-gradient(circle at 30% 50%, rgba(240,163,127,.25), transparent 70%); }
+.venn .circ.r { left: calc(50% - var(--u) * 5); align-items: flex-end; text-align: right; background: radial-gradient(circle at 70% 50%, rgba(224,83,61,.2), transparent 70%); }
+.venn .circ h3 { font-size: calc(var(--u) * 2.6); line-height: 1.05; margin: .2em 0 .3em; }
+.venn .circ.l { padding-right: calc(var(--u) * 12); } .venn .circ.r { padding-left: calc(var(--u) * 12); }
+.venn .circ p { color: var(--mute); font-size: calc(var(--u) * 1.15); }
+.venn .mid { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
+.venn .mid b { display: block; font-family: var(--serif); font-style: italic; font-weight: 400; font-size: calc(var(--u) * 2.4); color: var(--coral); line-height: 1.05; }
+
+/* terms */
+.terms { display: grid; grid-template-columns: repeat(6, 1fr); gap: calc(var(--u) * 1.6); margin-top: calc(var(--u) * 3.5); }
+.terms .card { grid-column: span 2; display: flex; flex-direction: column; padding: calc(var(--u) * 2); }
+.terms .card:nth-child(4) { grid-column: 2 / span 2; }
+.terms .card svg { width: calc(var(--u) * 9); height: calc(var(--u) * 4.5); color: var(--coral); margin-bottom: calc(var(--u) * 1.2); overflow: visible; }
+.terms .card h3 { font-size: calc(var(--u) * 2.2); margin-bottom: .1em; }
+.terms .card .mono { margin-bottom: 1em; }
+.terms .card p { font-size: calc(var(--u) * 1.15); }
+.anim * { transform-box: fill-box; transform-origin: center; }
+.pulse { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.16); } }
+.drift { animation: drift 3.4s ease-in-out infinite; }
+@keyframes drift { 0%,100% { transform: translateX(0); } 50% { transform: translateX(28%); } }
+.ripple { animation: ripple 2.4s ease-out infinite; opacity: 0; }
+.ripple.d2 { animation-delay: .8s; } .ripple.d3 { animation-delay: 1.6s; }
+@keyframes ripple { 0% { opacity: 0; transform: scale(.4); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.3); } }
+.look { animation: look 4s ease-in-out infinite; }
+@keyframes look { 0%,100% { transform: translateX(0); } 30% { transform: translateX(-60%); } 65% { transform: translateX(60%); } }
+.jitter { animation: jitter 2.8s steps(1) infinite; }
+@keyframes jitter { 0%,100% { transform: translate(0,0); } 20% { transform: translate(8%, -4%); } 40% { transform: translate(-6%, 3%); } 60% { transform: translate(3%, 6%); } 80% { transform: translate(-4%, -5%); } }
+
+/* compare table */
+.compare { margin-top: calc(var(--u) * 4); display: grid; grid-template-columns: 1.1fr 1fr 1fr; border-top: 1px solid var(--line); max-width: 75%; }
+.compare > div { padding: calc(var(--u) * 1.4) 0; border-bottom: 1px solid var(--line); }
+.compare .h { font-family: var(--serif); font-size: calc(var(--u) * 2.2); }
+.compare .y { color: var(--ink); } .compare .n { color: var(--coral); text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* viewfinders */
+.cams { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 3); margin-top: calc(var(--u) * 3.5); }
+.cam { aspect-ratio: 16/9; position: relative; border-radius: calc(var(--u) * .6); overflow: hidden; background: linear-gradient(150deg, #f3b393, #d9583f 55%, #6d1f17); }
+.cam.b { background: #1a1110; }
+.cam.b::before { content: ''; position: absolute; inset: -50%; opacity: .5; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='1'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); animation: grain .3s steps(4) infinite; }
+.cam .face { position: absolute; left: 50%; top: 58%; width: 42%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(255,236,224,.32); box-shadow: 0 calc(var(--u)*9) 0 calc(var(--u)*5) rgba(255,236,224,.2); }
+.cam .corners { position: absolute; inset: 7%; }
+.cam .corners i { position: absolute; width: 9%; aspect-ratio: 1; border: 2px solid rgba(255,255,255,.85); }
+.cam .corners i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; } .cam .corners i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.cam .corners i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; } .cam .corners i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+.cam .hud { position: absolute; left: 10%; top: 10%; right: 10%; display: flex; justify-content: space-between; font-family: var(--mono); font-size: calc(var(--u) * .75); letter-spacing: .14em; color: #fff; }
+.cam .hud .rec::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff3b2f; margin-right: .7em; animation: blink 1s infinite; }
+.cam .nosig { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); letter-spacing: .4em; color: rgba(255,255,255,.75); font-size: calc(var(--u) * 1.1); }
+.cam-cap { margin-top: 1em; }
+
+/* hierarchy */
+.hier { display: flex; flex-direction: column; gap: calc(var(--u) * .9); margin-top: calc(var(--u) * 2); }
+.hier div { border-radius: calc(var(--u) * .6); padding: calc(var(--u) * 1.1) calc(var(--u) * 1.6); display: flex; justify-content: space-between; align-items: baseline; }
+.hier .v { background: var(--coral); color: #fff; width: 100%; } .hier .m { background: var(--card); border: 1px solid var(--line); width: 72%; } .hier .n { border: 1px dashed var(--line); width: 48%; color: var(--mute); }
+.hier b { font-family: var(--serif); font-weight: 400; font-size: calc(var(--u) * 2.2); }
+.chips { display: flex; gap: .8em; flex-wrap: wrap; margin-top: 1.4em; }
+.chips span { font-family: var(--serif); font-style: italic; font-size: calc(var(--u) * 2); padding: .15em .9em; border-radius: 99px; border: 1px solid var(--coral); color: var(--coral); }
+
+/* ghost face */
+.ghost { aspect-ratio: 1; width: 48%; margin: 0 auto; border-radius: 50%; position: relative; background: radial-gradient(circle at 50% 42%, rgba(240,163,127,.55), rgba(224,83,61,.15) 45%, transparent 70%); filter: blur(calc(var(--u) * .8)); }
+.ghost::after { content: ''; position: absolute; inset: 22% 30% 34%; border-radius: 50% 50% 46% 46%; background: rgba(255,240,230,.35); }
+
+/* omnipresence */
+.omni { position: relative; aspect-ratio: 1; width: 100%; display: grid; place-items: center; }
+.omni .ring { position: absolute; border: 1px solid var(--coral); border-radius: 50%; inset: 0; animation: ripple 3.6s ease-out infinite; opacity: 0; }
+.omni .ring:nth-child(2) { animation-delay: 1.2s; } .omni .ring:nth-child(3) { animation-delay: 2.4s; }
+.omni .core { width: 26%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #f6b08f, #e0533d); box-shadow: 0 0 calc(var(--u)*6) rgba(224,83,61,.6); }
+.omni .sat { position: absolute; font-family: var(--mono); font-size: calc(var(--u) * .75); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+.versus { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 2); }
+.versus .card .big { font-family: var(--serif); font-style: italic; font-size: calc(var(--u) * 3.6); line-height: 1; color: var(--coral); }
+.versus .card.p .big { color: var(--mute); }
+
+/* handoff */
+.handoff .swap { display: flex; align-items: center; gap: calc(var(--u) * 3); margin-top: calc(var(--u) * 5); font-family: var(--serif); font-size: calc(var(--u) * 4); }
+.handoff .swap .k { color: var(--kai); } .handoff .swap .m { color: var(--mate); font-style: italic; }
+.handoff .arrow { flex: 0 0 calc(var(--u) * 14); height: 1px; background: var(--ink); position: relative; transform-origin: left; }
+.handoff .arrow::after { content: ''; position: absolute; right: 0; top: -5px; width: 10px; height: 10px; border-top: 1px solid var(--ink); border-right: 1px solid var(--ink); transform: rotate(45deg); }
+
+/* lists */
+.scenes { list-style: none; margin-top: calc(var(--u) * 3); display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 1.4) calc(var(--u) * 4); }
+.scenes li { display: grid; grid-template-columns: calc(var(--u) * 4) 1fr; border-top: 1px solid var(--line); padding-top: calc(var(--u) * 1.2); }
+.scenes li .i { font-family: var(--serif); font-style: italic; font-size: calc(var(--u) * 2.4); color: var(--coral); line-height: 1; }
+.scenes li h4 { font-family: var(--serif); font-weight: 400; font-size: calc(var(--u) * 2); line-height: 1.1; margin-bottom: .25em; }
+.scenes li p { color: var(--mute); font-size: calc(var(--u) * 1.2); }
+.traits { display: flex; flex-direction: column; gap: calc(var(--u) * 1.2); margin-top: calc(var(--u) * 4); }
+.traits div { font-family: var(--serif); font-size: calc(var(--u) * 4.5); line-height: 1; display: flex; align-items: baseline; gap: .5em; }
+.traits div span { font-family: var(--mono); font-size: calc(var(--u) * .8); letter-spacing: .2em; color: var(--coral); }
+
+/* mirror */
+.mirror { position: relative; display: flex; flex-direction: column; align-items: center; }
+.mirror .word { font-family: var(--sans); font-weight: 200; font-size: calc(var(--u) * 13); line-height: .85; }
+.mirror .refl { transform: scaleY(-1); opacity: .35; -webkit-mask-image: linear-gradient(to top, #000, transparent 70%); mask-image: linear-gradient(to top, #000, transparent 70%); }
+.mirror .glass { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--coral), transparent); }
+
+/* figures */
+.fig { position: relative; aspect-ratio: 2.39/1; border-radius: calc(var(--u) * .6); overflow: hidden; background: linear-gradient(120deg, #f2b495 0%, #dc6a4b 45%, #7e2a1f 100%); box-shadow: 0 calc(var(--u)*2) calc(var(--u)*5) rgba(80,20,10,.25); }
+.fig.alt { background: linear-gradient(120deg, #3a1d19, #b4472f 60%, #f0a37f); }
+.fig.night { background: linear-gradient(120deg, #2b1513, #6a2b23 55%, #e0533d); }
+.fig svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fig .lab { position: absolute; left: 4%; top: 7%; font-family: var(--mono); font-size: calc(var(--u) * .72); letter-spacing: .2em; color: rgba(255,255,255,.85); }
+.fig .lab2 { position: absolute; right: 4%; bottom: 8%; font-family: var(--mono); font-size: calc(var(--u) * .66); letter-spacing: .14em; color: rgba(255,255,255,.6); text-transform: uppercase; }
+.figcap { margin-top: 1em; }
+.side { display: grid; grid-template-columns: 1.15fr 1fr; gap: calc(var(--u) * 5); align-items: center; }
+
+/* matrix */
+.matrix { display: grid; grid-template-columns: calc(var(--u) * 8) 1fr 1fr; grid-template-rows: calc(var(--u) * 3) 1fr 1fr; width: 100%; aspect-ratio: 1.25; position: relative; }
+.matrix .ax { display: flex; align-items: center; justify-content: center; }
+.matrix .cell { border: 1px solid var(--line); position: relative; display: flex; align-items: flex-end; padding: calc(var(--u) * 1); }
+.matrix .cell span { font-family: var(--mono); font-size: calc(var(--u) * .66); letter-spacing: .12em; color: var(--mute); text-transform: uppercase; }
+.matrix .cell.hl { background: color-mix(in srgb, var(--coral) 10%, transparent); }
+.pin { position: absolute; z-index: 2; display: flex; align-items: center; gap: .7em; font-family: var(--serif); font-size: calc(var(--u) * 1.7); white-space: nowrap; }
+.pin i { width: calc(var(--u) * 1.5); height: calc(var(--u) * 1.5); border-radius: 50%; background: var(--ink); flex: none; }
+.pin.sam i { background: var(--coral); box-shadow: 0 0 0 calc(var(--u)*.6) rgba(224,83,61,.2); }
+
+/* aural */
+.breath { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 16); aspect-ratio: 1; margin: calc(var(--u) * -8) 0 0 calc(var(--u) * -8); border-radius: 50%; background: radial-gradient(circle, rgba(240,115,92,.55), rgba(224,83,61,.08) 60%, transparent 70%); animation: breathe 6s ease-in-out infinite; }
+@keyframes breathe { 0%,100% { transform: scale(.75); opacity: .55; } 45% { transform: scale(1.35); opacity: 1; } }
+.aural { align-items: center; text-align: center; }
+.aural .line { font-family: var(--serif); font-style: italic; font-size: calc(var(--u) * 3.2); line-height: 1.2; position: relative; z-index: 2; }
+.aural .line + .line { margin-top: .6em; }
+.aural .tiny { position: absolute; bottom: calc(var(--u) * 9); left: 0; right: 0; z-index: 2; }
+
+/* counters */
+.big-num { font-family: var(--serif); font-weight: 300; font-size: calc(var(--u) * 12); line-height: .9; letter-spacing: -.03em; }
+.big-num.coral { color: var(--coral); }
+.nodes { position: relative; width: 100%; aspect-ratio: 1.4; }
+.nodes i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: var(--ink); opacity: .35; }
+.nodes i.love { background: var(--coral); opacity: 1; width: 6px; height: 6px; }
+
+/* finale */
+.finale { align-items: center; text-align: center; }
+.finale .quote { font-size: calc(var(--u) * 4.4); font-style: normal; font-weight: 300; max-width: 20em; line-height: 1.1; }
+.refs { columns: 2; column-gap: calc(var(--u) * 4); font-size: calc(var(--u) * .95); color: var(--mute); margin-top: calc(var(--u) * 3); }
+.refs p { break-inside: avoid; margin-bottom: .6em; }
+.refs i { color: var(--ink); }
+
+/* glossary overlay */
+#gloss { position: fixed; inset: 0; z-index: 80; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(18px); display: flex; flex-direction: column; justify-content: center; padding: 0 calc(var(--u) * 9); visibility: hidden; opacity: 0; }
+#gloss .x { position: absolute; top: calc(var(--u) * 3); right: calc(var(--u) * 4); }
+
+@media (prefers-reduced-motion: reduce) { .grain, .pulse, .drift, .ripple, .look, .jitter, .breath, .omni .ring { animation: none; } .ripple, .omni .ring { opacity: .6; } }
+</style>
+</head>
+<body class="dark hide-chrome">
+
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<canvas id="wave"></canvas>
+<div class="letterbox top"></div><div class="letterbox bot"></div>
+<div class="grain"></div>
+<div id="cursor"></div>
+
+<header class="chrome">
+  <div class="brand"><b>her</b><span>The gendered AI · Papakyriakopoulou 2022</span></div>
+  <div class="speaker"><span class="dot"></span><span>Presenting</span><span class="name">Kai</span></div>
+</header>
+<div class="counter"><span id="cnt">01 / 01</span></div>
+<nav class="chapters" id="nav"></nav>
+
+<main id="deck">
+
+<!-- ============ INTRO ============ -->
+<section class="slide intro" data-theme="dark" data-wave="hero" data-ch="0" data-speaker="both" data-chrome="off" data-hook="intro">
+  <div class="listening mono" data-a>Digital Anthropology · Paper presentation</div>
+  <h1 class="title-her split">her</h1>
+  <div class="sub" data-a>The gendered AI in <em>Her</em> (2013)</div>
+  <div class="sub2" data-a>Sound, synchresis and disconnection in filmic representations</div>
+  <div class="meta mono" data-a>
+    <span>Katerina Papakyriakopoulou</span><span>Technoetic Arts 18:2&amp;3</span><span>Kai &amp; <span data-mate></span></span>
+  </div>
+  <div class="hint mono" data-a>Press <kbd>→</kbd> to begin &nbsp;·&nbsp; <kbd>F</kbd> fullscreen &nbsp;·&nbsp; <kbd>G</kbd> glossary</div>
+</section>
+
+<!-- ============ 0 · PREMISE ============ -->
+<section class="slide" data-theme="light" data-wave="low" data-ch="0" data-speaker="kai">
+  <div class="eyebrow" data-a>00 — The film · Spike Jonze, 2013</div>
+  <h2 class="headline split">A man falls in love <em>with a voice.</em></h2>
+  <div class="people">
+    <div class="person" data-a>
+      <div class="portrait seen"></div>
+      <div>
+        <h3>Theodore</h3>
+        <div class="mono role">Joaquin Phoenix</div>
+        <p>A lonely man who writes <strong>love letters for other people</strong> for a living.</p>
+        <span class="tag">Always on screen</span>
+      </div>
+    </div>
+    <div class="person" data-a>
+      <div class="portrait unseen">
+        <svg viewBox="0 0 100 60" fill="none" stroke="var(--coral)" stroke-width="1.4" class="anim"><path class="pulse" d="M5 30 Q15 30 20 22 T30 30 T40 14 T50 30 T60 46 T70 30 T80 38 T95 30"/></svg>
+      </div>
+      <div>
+        <h3>Samantha</h3>
+        <div class="mono role">Voiced by Scarlett Johansson</div>
+        <p>An <strong>AI operating system</strong>. No body, no face. Only a voice.</p>
+        <span class="tag hot">Never seen · only heard</span>
+      </div>
+    </div>
+  </div>
+  <p class="lead" data-a>This <strong>bodiless woman</strong> is what the paper analyzes.</p>
+</section>
+
+<!-- ============ 1 · INTRODUCTION ============ -->
+<section class="slide chapter" data-theme="light" data-wave="low" data-ch="1" data-speaker="kai">
+  <div class="num"><span>01</span></div>
+  <div class="mono" data-a>Chapter one</div>
+  <h2 class="split">Introduction</h2>
+  <div class="sub" data-a>The question and the approach</div>
+  <div class="by mono" data-a><i></i>Presented by Kai</div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="1" data-speaker="kai">
+  <div class="eyebrow" data-a>The research question</div>
+  <h2 class="headline sm split">Does giving a bodiless AI a female gender <em>break</em> gender norms, or is it just a <em>male fantasy?</em></h2>
+  <div class="fork">
+    <div class="card" data-a>
+      <div class="mono">Reading A</div>
+      <h3 style="margin-top:.5em">A feminist reading</h3>
+      <p>The film shows <strong>female subjectivity</strong> in the post-human era.</p>
+    </div>
+    <div class="or" data-a>or</div>
+    <div class="card" data-a>
+      <div class="mono">Reading B</div>
+      <h3 style="margin-top:.5em">The same old story</h3>
+      <p>The film repeats the <strong>objectification</strong> of women.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="1" data-speaker="kai" data-hook="timeline">
+  <div class="eyebrow" data-a>Why sound matters</div>
+  <h2 class="headline split">We treat cinema as something <em>we watch.</em></h2>
+  <div class="timeline" data-a>
+    <div class="track"></div>
+    <div class="silent"></div>
+    <div class="sound"><svg viewBox="0 0 400 20" preserveAspectRatio="none"><path d="M0 10 Q5 2 10 10 T20 10 T30 10 T40 10 T50 10 T60 10 T70 10 T80 10 T90 10 T100 10 T110 10 T120 10 T130 10 T140 10 T150 10 T160 10 T170 10 T180 10 T190 10 T200 10 T210 10 T220 10 T230 10 T240 10 T250 10 T260 10 T270 10 T280 10 T290 10 T300 10 T310 10 T320 10 T330 10 T340 10 T350 10 T360 10 T370 10 T380 10 T390 10 T400 10" fill="none" stroke="#e0533d" stroke-width="2"/></svg></div>
+    <div class="mark" style="left:0"><b>1890s</b>Silent era: 30+ years</div>
+    <div class="mark" style="left:27%"><b>Late 1920s</b>Synchronized sound arrives</div>
+    <div class="mark" style="right:0;text-align:right"><b>Today</b>Image still comes first</div>
+  </div>
+  <div class="cols c2">
+    <div class="quote" data-a>The belief that images carry a film's meaning is the <em>"ontological fallacy."</em><cite>Rick Altman</cite></div>
+    <div class="quote" data-a>Sound can shape our perception <em>more than</em> the image does.<cite>Michel Chion</cite></div>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="1" data-speaker="kai" data-hook="bars">
+  <div class="eyebrow" data-a>The gap in feminist film theory</div>
+  <h2 class="headline split">Her <em>image</em> was studied. Her <em>voice,</em> barely.</h2>
+  <div class="bars">
+    <div data-a>
+      <div class="lbl mono"><span>Women's image on screen</span><span>studied a lot</span></div>
+      <div class="b img"></div>
+    </div>
+    <div data-a>
+      <div class="lbl mono"><span>The female voice</span><span>much less</span></div>
+      <div class="b voice"></div>
+    </div>
+  </div>
+  <p class="lead" data-a>The main exception: <strong>Kaja Silverman, <i>The Acoustic Mirror</i> (1988)</strong>, a psychoanalytic study of the female voice in cinema.</p>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="1" data-speaker="kai" data-hook="venn">
+  <div class="eyebrow" data-a>The method</div>
+  <h2 class="headline sm split">Two lenses, <em>one focal point.</em></h2>
+  <div class="venn">
+    <div class="circ l"><div class="mono">Lens 1</div><h3>Michel Chion</h3><p>How sound and image fuse or split</p></div>
+    <div class="circ r"><div class="mono">Lens 2</div><h3>Kaja Silverman</h3><p>Voice, body and gender (psychoanalysis)</p></div>
+    <div class="mid" data-a><b>the female<br>voice</b></div>
+  </div>
+  <p class="lead" data-a style="margin-top:calc(var(--u)*1.5)">The paper follows how <em>Her</em> keeps <strong>joining and separating</strong> sound and image.</p>
+</section>
+
+<!-- ============ 2 · KEY TERMS ============ -->
+<section class="slide chapter" data-theme="light" data-wave="low" data-ch="2" data-speaker="kai">
+  <div class="num"><span>02</span></div>
+  <div class="mono" data-a>Chapter two</div>
+  <h2 class="split">Key Terms</h2>
+  <div class="sub" data-a>A small vocabulary for a bodiless character</div>
+  <div class="by mono" data-a><i></i>Presented by Kai</div>
+  <div class="note mono" data-a>Press G at any point to bring these back</div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="2" data-speaker="kai">
+  <div class="eyebrow" data-a>Glossary</div>
+  <h2 class="headline sm split">Five ideas to <em>listen with.</em></h2>
+  <div class="terms" id="terms">
+    <div class="card" data-a>
+      <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="1.6" class="anim"><rect class="pulse" x="8" y="15" width="30" height="30" rx="2"/><path class="pulse" d="M55 30 Q62 10 69 30 T83 30 T97 30 T111 30"/></svg>
+      <h3>Synchresis</h3><div class="mono">Chion</div>
+      <p><strong>Synchronism + synthesis.</strong> Sound and image fuse into one event when they happen at the same time.</p>
+    </div>
+    <div class="card" data-a>
+      <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="1.6" class="anim"><circle cx="24" cy="30" r="15"/><path class="drift" d="M44 30 Q51 12 58 30 T72 30 T86 30"/></svg>
+      <h3>Disconnection</h3><div class="mono">Silverman</div>
+      <p>Separating the <strong>voice from the body</strong>. It shapes how we read male vs. female characters.</p>
+    </div>
+    <div class="card" data-a>
+      <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="1.6" class="anim"><line x1="60" y1="4" x2="60" y2="56" stroke-dasharray="3 3"/><path class="ripple" d="M40 18 Q50 30 40 42"/><path class="ripple d2" d="M30 10 Q46 30 30 50"/><path class="ripple" d="M80 18 Q70 30 80 42"/><path class="ripple d2" d="M90 10 Q74 30 90 50"/><circle cx="14" cy="30" r="5" fill="currentColor"/></svg>
+      <h3>Acoustic mirror</h3><div class="mono">Silverman</div>
+      <p>A child first finds its identity through the <strong>mother's voice</strong>. Later, the male subject projects his rejected weaknesses onto it.</p>
+    </div>
+    <div class="card" data-a>
+      <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="1.6" class="anim"><path d="M10 30 Q60 -6 110 30 Q60 66 10 30Z"/><circle class="look" cx="60" cy="30" r="9" fill="currentColor"/></svg>
+      <h3>Male gaze</h3><div class="mono">Laura Mulvey, 1975</div>
+      <p>In film, <strong>the woman is the image</strong> and the man is the one who looks.</p>
+    </div>
+    <div class="card" data-a>
+      <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="1.6" class="anim"><circle cx="54" cy="30" r="17"/><circle class="jitter" cx="66" cy="30" r="17" stroke-dasharray="4 3"/></svg>
+      <h3>Uncanny</h3><div class="mono">Sigmund Freud, 1919</div>
+      <p>Something <strong>familiar and strange</strong> at once, and often unsettling.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 · THE OTHER ============ -->
+<section class="slide chapter" data-theme="dark" data-wave="low" data-ch="3" data-speaker="kai">
+  <div class="num"><span>03</span></div>
+  <div class="mono" data-a>Chapter three</div>
+  <h2 class="split">The Other</h2>
+  <div class="sub" data-a>Disembodiment as power, or as marginalization?</div>
+  <div class="by mono" data-a><i></i>Presented by Kai</div>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="3" data-speaker="kai">
+  <div class="eyebrow" data-a>Samantha is uncanny</div>
+  <h2 class="headline split">Human-like. Bodiless. <em>Uncanny.</em></h2>
+  <div class="compare" data-a>
+    <div></div><div class="h">Film androids</div><div class="h" style="color:var(--coral)">Samantha</div>
+    <div class="mono">Flesh-like body</div><div class="y">Yes</div><div class="n">No</div>
+    <div class="mono">A face to look at</div><div class="y">Yes</div><div class="n">No</div>
+    <div class="mono">A voice</div><div class="y">Yes</div><div class="y">Yes</div>
+  </div>
+  <p class="lead" data-a>With no flesh-like body at all, the romance becomes <strong>unconventional</strong>.</p>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="3" data-speaker="kai" data-hook="letterbox">
+  <div class="eyebrow" data-a>The camera's choice</div>
+  <h2 class="headline sm split">The gaze, <em>reversed.</em></h2>
+  <div class="cams">
+    <div data-a>
+      <div class="cam"><div class="face"></div><div class="corners"><i></i><i></i><i></i><i></i></div><div class="hud"><span class="rec">REC</span><span>CAM A · Theodore</span></div></div>
+      <div class="cam-cap mono">Close-up after close-up of the man</div>
+    </div>
+    <div data-a>
+      <div class="cam b"><div class="corners"><i></i><i></i><i></i><i></i></div><div class="hud"><span>—</span><span>CAM B · Samantha</span></div><div class="nosig">NO SIGNAL</div></div>
+      <div class="cam-cap mono">The woman is never shown</div>
+    </div>
+  </div>
+  <div class="cols c2" style="margin-top:calc(var(--u)*3)">
+    <p data-a><strong>Take away the woman's body, and the male gaze loses its power.</strong></p>
+    <p data-a style="color:var(--mute)"><em>Counter-reading:</em> without a body, maybe she is neither subject nor object, just a marginalized "other."</p>
+  </div>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="3" data-speaker="kai">
+  <div class="eyebrow" data-a>Silverman's rule, and how Her breaks it</div>
+  <h2 class="headline sm split">The female voice <em>always returns</em> to the body.</h2>
+  <div class="cols c2">
+    <div class="card" data-a>
+      <div class="mono">In popular film</div>
+      <h3 style="margin-top:.5em">Only temporary</h3>
+      <p>A woman's voice may float free for a while, but she is <strong>always brought back to her body</strong>. A voice that stayed free would threaten the male gaze.</p>
+    </div>
+    <div class="card" data-a style="border-color:var(--coral)">
+      <div class="mono" style="color:var(--coral)">In Her</div>
+      <h3 style="margin-top:.5em">Permanent, yet still gendered</h3>
+      <p>Samantha never gets a body. Yet her voice stays <strong>feminine and sexualized</strong> through:</p>
+      <div class="chips"><span>tone</span><span>pauses</span><span>language</span><span>acting</span></div>
+    </div>
+  </div>
+  <p class="quote" data-a style="margin-top:calc(var(--u)*3)">A voice is <em>more than sound.</em></p>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="3" data-speaker="kai">
+  <div class="eyebrow" data-a>Two complications</div>
+  <div class="cols c2" style="margin-top:0;align-items:center">
+    <div>
+      <h2 class="headline sm split">Cinema is <em>vococentric.</em></h2>
+      <p class="lead" data-a>Chion: the voice, as the vehicle of language, outranks everything else on the soundtrack.</p>
+      <div class="hier">
+        <div class="v" data-a><b>Voice</b><span class="mono" style="color:#fff">carries language</span></div>
+        <div class="m" data-a><b>Music</b></div>
+        <div class="n" data-a><b>Noise</b></div>
+      </div>
+    </div>
+    <div>
+      <div class="ghost" data-a></div>
+      <h3 data-a style="font-size:calc(var(--u)*2.6);margin-top:calc(var(--u)*1.5)">But we know <em>her face.</em></h3>
+      <p data-a style="color:var(--mute)">Casting <strong>Scarlett Johansson</strong> means the voice is never fully detached from an image. The disembodiment stays <strong>incomplete</strong>, which fits Silverman: the female voice always returns to the body (unlike the male voice).</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="3" data-speaker="kai">
+  <div class="eyebrow" data-a>And yet</div>
+  <div class="side">
+    <div>
+      <h2 class="headline split">Still, <em>it works.</em></h2>
+      <div class="versus" style="margin-top:calc(var(--u)*3)">
+        <div class="card" data-a><div class="big">active</div><div class="mono" style="margin:.8em 0">Samantha</div><p>Organizes his files, reads his emails, makes decisions for him.</p></div>
+        <div class="card p" data-a><div class="big">passive</div><div class="mono" style="margin:.8em 0">Theodore</div><p>Is guided, organized, decided for.</p></div>
+      </div>
+      <p class="lead" data-a>She becomes a <strong>powerful subject</strong>, more than an "other."</p>
+    </div>
+    <div class="omni" data-a>
+      <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+      <div class="core"></div>
+      <span class="sat" style="top:8%">files</span><span class="sat" style="right:4%">emails</span><span class="sat" style="bottom:8%">decisions</span><span class="sat" style="left:4%">everywhere</span>
+      <span class="sat" style="top:70%;color:var(--coral)">almost divine omnipresence</span>
+    </div>
+  </div>
+</section>
+
+<section class="slide handoff" data-theme="dark" data-wave="hero" data-ch="3" data-speaker="kai" data-hook="handoff">
+  <div class="eyebrow" data-a>Handoff</div>
+  <h2 class="headline sm split">But the film also gives her some very traditional feminine traits, <em>especially maternal ones.</em></h2>
+  <div class="swap" data-a><span class="k">Kai</span><span class="arrow"></span><span class="m" data-mate></span></div>
+</section>
+
+<!-- ============ 4 · THE MOTHER ============ -->
+<section class="slide chapter mate" data-theme="light" data-wave="low" data-ch="4" data-speaker="mate">
+  <div class="num"><span>04</span></div>
+  <div class="mono" data-a>Chapter four</div>
+  <h2 class="split">The Mother</h2>
+  <div class="sub" data-a>Samantha as a maternal figure</div>
+  <div class="by mono" data-a><i></i>Presented by <span data-mate></span></div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="4" data-speaker="mate">
+  <div class="eyebrow" data-a>Stereotypically feminine</div>
+  <div class="side">
+    <div class="traits">
+      <div data-a><span>01</span>Nurturing &amp; <em>sweet</em></div>
+      <div data-a><span>02</span>Emotionally <em>intelligent</em></div>
+      <div data-a><span>03</span>Gives <em>dating advice</em></div>
+    </div>
+    <div>
+      <p class="quote" data-a>Caring traits that have historically been tied to <em>women's oppression.</em></p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="4" data-speaker="mate">
+  <div class="eyebrow" data-a>Motherhood, all through the film</div>
+  <h2 class="headline sm split">Mothers <em>everywhere.</em></h2>
+  <ul class="scenes">
+    <li data-a><span class="i">i</span><div><h4>The setup</h4><p>While installing, the OS asks Theodore about his relationship with his mother.</p></div></li>
+    <li data-a><span class="i">ii</span><div><h4>Amy's film</h4><p>Amy films her sleeping mother to study the unconscious, in contrast with Samantha's growing consciousness, which leads to her liberation.</p></div></li>
+    <li data-a><span class="i">iii</span><div><h4>The subway</h4><p>Theodore secretly looks at a nude photo of a pregnant celebrity, hiding it like a naughty child.</p></div></li>
+    <li data-a><span class="i">iv</span><div><h4>The phone call</h4><p>A voice-only sex chat with a stranger. It foreshadows the romance with Samantha and reveals his complicated relationship with his mother.</p></div></li>
+    <li data-a><span class="i">v</span><div><h4>Nature vs. nurture</h4><p>The "sacredness" of motherhood is shown as culturally constructed.</p></div></li>
+  </ul>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="4" data-speaker="mate">
+  <div class="eyebrow" data-a>Acoustic mirror · Silverman 1988</div>
+  <div class="side">
+    <div>
+      <h2 class="headline sm split">Her voice echoes <em>his</em> weaknesses.</h2>
+      <p class="lead" data-a><strong>An Oedipal reading:</strong> there is no father figure. Theodore is surrounded by women and acts like a "castrated child" seeking guidance.</p>
+      <p class="lead" data-a>Even dating an AI is framed as a <strong>personal failure</strong> after his marriage ended.</p>
+    </div>
+    <div class="mirror" data-a>
+      <div class="word">him</div>
+      <div class="glass"></div>
+      <div class="word refl" style="color:var(--coral)">him</div>
+      <div class="mono" style="margin-top:1em">What he sees in her is himself</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="4" data-speaker="mate">
+  <div class="eyebrow" data-a>Key scene · Figure 1</div>
+  <div class="side">
+    <div data-a>
+      <div class="fig">
+        <svg viewBox="0 0 239 100" preserveAspectRatio="xMidYMid slice" fill="none">
+          <path d="M0 78 H239" stroke="rgba(255,255,255,.35)"/>
+          <g stroke="rgba(255,255,255,.75)" stroke-width="1.2"><circle cx="70" cy="40" r="5"/><path d="M70 45 V62 M70 62 L64 77 M70 62 L76 77 M70 50 L62 57 M70 50 L78 57"/><path d="M66 39 h3 M71 39 h3" stroke-width=".8"/></g>
+          <path d="M78 40 Q110 30 140 42 T190 48" stroke="#fff" stroke-dasharray="2 3" opacity=".7"/>
+          <g stroke="rgba(255,255,255,.75)"><rect x="185" y="50" width="30" height="28"/><path d="M181 50 L200 38 L219 50"/></g>
+        </svg>
+        <div class="lab">FIG. 1</div><div class="lab2">Still not embedded · copyrighted</div>
+      </div>
+      <div class="figcap mono">Theodore walks with his eyes closed, guided only by her voice</div>
+    </div>
+    <div>
+      <h2 class="headline sm split">She knew he was <em>hungry.</em></h2>
+      <p class="lead" data-a>He ends up at a food stand. Samantha read his needs before he said them, <strong>like a mother reading her infant.</strong></p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="4" data-speaker="mate" data-hook="venn">
+  <div class="eyebrow" data-a>The fetish risk</div>
+  <h2 class="headline sm split">A <em>double</em> fetish?</h2>
+  <div class="venn" style="height:calc(var(--u)*24)">
+    <div class="circ l" style="width:calc(var(--u)*24);height:calc(var(--u)*24);left:calc(50% - var(--u)*20)"><h3>Sexual</h3></div>
+    <div class="circ r" style="width:calc(var(--u)*24);height:calc(var(--u)*24);left:calc(50% - var(--u)*4)"><h3>Maternal</h3></div>
+    <div class="mid" data-a><b>Samantha</b></div>
+  </div>
+  <div class="cols c2" style="margin-top:calc(var(--u)*2)">
+    <p data-a><strong>Chion:</strong> a disembodied voice can take us back to the womb.</p>
+    <p data-a style="color:var(--mute)">So Samantha could be sexual and maternal at once <span class="mono">(Silverman; Mary Ann Doane)</span>.</p>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="4" data-speaker="mate">
+  <div class="eyebrow" data-a>The rebuttal</div>
+  <div class="side">
+    <div>
+      <h2 class="headline sm split">Two <em>objections.</em></h2>
+      <ul class="scenes" style="grid-template-columns:1fr">
+        <li data-a><span class="i">1</span><div><h4>There are many kinds of gaze</h4><p>Analysis does not have to stay stuck in gender binaries.</p></div></li>
+        <li data-a><span class="i">2</span><div><h4>The man is put on display too</h4><p>The opening shot is an extreme close-up of Theodore reading a love letter.</p></div></li>
+      </ul>
+    </div>
+    <div data-a>
+      <div class="fig alt">
+        <svg viewBox="0 0 239 100" preserveAspectRatio="xMidYMid slice"><circle cx="150" cy="58" r="44" fill="rgba(255,236,224,.22)"/><text x="22" y="56" font-family="Cormorant Garamond, serif" font-style="italic" font-size="15" fill="#fff">"To my Chris..."</text></svg>
+        <div class="lab">FIG. 2</div><div class="lab2">Still not embedded · copyrighted</div>
+      </div>
+      <div class="figcap mono">The opening: an extreme close-up of the man</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="4" data-speaker="mate">
+  <div class="eyebrow" data-a>Whose voice can we trust? · Kornhaber 2017</div>
+  <h2 class="headline sm split">A <em>gender switch</em> in the very first scene.</h2>
+  <div class="cols c2">
+    <div class="card" data-a>
+      <div class="mono">Theodore's voice</div>
+      <h3 style="margin-top:.5em">Linked to <em>fraud</em></h3>
+      <p>The letter is "from" <strong>Loretta</strong>, but <strong>Theodore</strong> wrote it. He speaks other people's feelings for money.</p>
+    </div>
+    <div class="card" data-a style="border-color:var(--coral)">
+      <div class="mono" style="color:var(--coral)">Samantha's voice</div>
+      <h3 style="margin-top:.5em">Linked to <em>fidelity</em></h3>
+      <p>Her voice carries truth and <strong>verbal authority</strong>, a trait usually given to male voice-overs.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · THE LOVER ============ -->
+<section class="slide chapter mate" data-theme="dark" data-wave="low" data-ch="5" data-speaker="mate">
+  <div class="num"><span>05</span></div>
+  <div class="mono" data-a>Chapter five</div>
+  <h2 class="split">The Lover</h2>
+  <div class="sub" data-a>Two erotic scenes</div>
+  <div class="by mono" data-a><i></i>Presented by <span data-mate></span></div>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="5" data-speaker="mate">
+  <div class="eyebrow" data-a>The missing body</div>
+  <h2 class="headline split">Sound makes up for <em>the missing body.</em></h2>
+  <p class="lead" data-a>But Samantha herself sees her lack of a body as <strong>a problem in the relationship.</strong> The film tries two answers:</p>
+  <div class="cols c2">
+    <div class="card" data-a><div class="mono">Scene A</div><h3 style="margin-top:.5em">The "physical" scene</h3><p>She borrows someone else's body.</p></div>
+    <div class="card" data-a><div class="mono">Scene B</div><h3 style="margin-top:.5em">The "aural" scene</h3><p>No body at all. Only voices.</p></div>
+  </div>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="5" data-speaker="mate">
+  <div class="eyebrow" data-a>Scene A · Figures 3–4</div>
+  <div class="side">
+    <div>
+      <h2 class="headline sm split">The <em>surrogate.</em></h2>
+      <p class="lead" data-a>Samantha invites <strong>Isabella</strong> (Portia Doubleday, voiced by Soko) to be her body. Isabella stays <strong>silent</strong>, wearing a tiny camera and an earpiece, while Samantha's voice leads.</p>
+      <p class="lead" data-a>Theodore is uncomfortable. The seduction and dancing look <strong>grotesque</strong>, so the gaze is subverted. The scene fails: Isabella locks herself in the bathroom.</p>
+    </div>
+    <div style="display:grid;gap:calc(var(--u)*1.5)">
+      <div data-a><div class="fig night"><svg viewBox="0 0 239 100" preserveAspectRatio="xMidYMid slice"><circle cx="95" cy="50" r="26" fill="rgba(255,236,224,.18)"/><circle cx="140" cy="48" r="26" fill="rgba(255,236,224,.28)"/><circle cx="140" cy="38" r="2.5" fill="#ff6b52"/></svg><div class="lab">FIG. 3</div><div class="lab2">Isabella tries to kiss Theodore</div></div></div>
+      <div data-a><div class="fig night"><svg viewBox="0 0 239 100" preserveAspectRatio="xMidYMid slice"><g stroke="rgba(255,236,224,.6)" stroke-width="1.4" fill="none"><circle cx="120" cy="32" r="7"/><path d="M120 39 V64 M120 64 L110 84 M120 64 L132 82 M120 46 L104 36 M120 46 L138 54"/></g></svg><div class="lab">FIG. 4</div><div class="lab2">Isabella dances for Theodore</div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="5" data-speaker="mate" data-hook="matrix">
+  <div class="eyebrow" data-a>The disconnection, reversed</div>
+  <div class="side">
+    <div>
+      <h2 class="headline sm split">Seen <em>or</em> heard. <em>Never both.</em></h2>
+      <p class="lead" data-a>Isabella has a body but must stay mute: <strong>objectified for male pleasure.</strong> Samantha has a voice but no body.</p>
+      <p class="lead" data-a>When Isabella hides in the bathroom, she becomes <strong>heard but not seen</strong>, just like Samantha. Two actresses for one woman intensify the split.</p>
+    </div>
+    <div class="matrix" data-a>
+      <div></div><div class="ax mono">Heard</div><div class="ax mono">Not heard</div>
+      <div class="ax mono">Seen</div><div class="cell"><span>The full woman</span></div><div class="cell"><span>Body, no voice</span></div>
+      <div class="ax mono">Not seen</div><div class="cell hl"><span>Voice, no body</span></div><div class="cell"><span>Absent</span></div>
+      <div class="pin isa" style="left:63%;top:32%"><i></i>Isabella</div>
+      <div class="pin sam" style="left:22%;top:84%"><i></i>Samantha</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="5" data-speaker="mate">
+  <div class="eyebrow" data-a>Silverman 1988: 164</div>
+  <div class="cols c2" style="margin-top:0;gap:calc(var(--u)*6)">
+    <div data-a>
+      <div class="mono">A woman seen, not heard</div>
+      <div class="big-num" style="font-style:italic;font-size:calc(var(--u)*7);margin-top:.2em">an enigma.</div>
+    </div>
+    <div data-a>
+      <div class="mono" style="color:var(--coral)">A woman heard, not seen</div>
+      <div class="big-num coral" style="font-style:italic;font-size:calc(var(--u)*7);margin-top:.2em">more dangerous.</div>
+    </div>
+  </div>
+  <div class="rule" data-a></div>
+  <p class="quote" data-a>In <em>Her</em>, that danger is anxiety about <em>female liberation.</em></p>
+</section>
+
+<section class="slide aural" data-theme="dark" data-wave="breath" data-ch="5" data-speaker="mate" data-hook="aural">
+  <div class="breath"></div>
+  <div class="eyebrow" data-a style="position:relative;z-index:2">Scene B · The aural scene</div>
+  <p class="line">No surrogate. No nudity.</p>
+  <p class="line">A close-up of Theodore, then about <em>a minute of black screen.</em></p>
+  <p class="line">Only voices.</p>
+  <div class="tiny mono">Breathe with it</div>
+</section>
+
+<section class="slide" data-theme="dark" data-wave="low" data-ch="5" data-speaker="mate">
+  <div class="eyebrow" data-a>Chion · sound acts on the body</div>
+  <h2 class="headline split">Sound over image. <em>Consciousness over flesh.</em></h2>
+  <div class="cols c3">
+    <div class="card" data-a><div class="mono">The effect</div><p style="margin-top:.6em">Breathing sounds can change <strong>the viewer's own breathing.</strong></p></div>
+    <div class="card" data-a><div class="mono">The feeling</div><p style="margin-top:.6em"><strong>Arousal plus uncanniness</strong> at the same time.</p></div>
+    <div class="card" data-a><div class="mono">The cause</div><p style="margin-top:.6em">Her <strong>disembodiment</strong>, more than her being non-human.</p></div>
+  </div>
+</section>
+
+<!-- ============ 6 · CONCLUSION ============ -->
+<section class="slide chapter mate" data-theme="light" data-wave="low" data-ch="6" data-speaker="mate">
+  <div class="num"><span>06</span></div>
+  <div class="mono" data-a>Chapter six</div>
+  <h2 class="split">Conclusion</h2>
+  <div class="sub" data-a>What the voice tells us</div>
+  <div class="by mono" data-a><i></i>Presented by <span data-mate></span></div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="6" data-speaker="mate">
+  <div class="eyebrow" data-a>The verdict</div>
+  <h2 class="headline split">A <em>subject,</em> not an object.</h2>
+  <div class="cols c2">
+    <div class="card" data-a style="border-color:var(--coral)">
+      <div class="mono" style="color:var(--coral)">What the film achieves</div>
+      <h3 style="margin-top:.5em">A powerful, utopian subject</h3>
+      <p>Samantha is neither an object nor a threatening "other."</p>
+    </div>
+    <div class="card" data-a>
+      <div class="mono">What remains</div>
+      <h3 style="margin-top:.5em">Patriarchal limits</h3>
+      <p>Especially in how the female AI's <strong>sexuality</strong> is represented.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="6" data-speaker="mate">
+  <div class="eyebrow" data-a>A mirror of human desire</div>
+  <div class="side">
+    <div>
+      <h2 class="headline sm split">A <em>one-way</em> mirror.</h2>
+      <p class="lead" data-a>The AI mirrors the human desire <strong>to know and to become</strong>. The film is really about the human mind, not computer consciousness.</p>
+      <p class="lead" data-a>In <em>"her"</em>, Theodore sees <strong>his own emotional limits.</strong></p>
+    </div>
+    <div class="mirror" data-a>
+      <div class="word" style="color:var(--coral)">her</div>
+      <div class="glass"></div>
+      <div class="word refl">him</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-theme="light" data-wave="low" data-ch="6" data-speaker="mate" data-hook="nodes">
+  <div class="eyebrow" data-a>Control and fidelity</div>
+  <div class="side">
+    <div>
+      <h2 class="headline sm split">Not infidelity. <em>A skill.</em></h2>
+      <p class="lead" data-a>Her simultaneous relationships with many humans and operating systems are shown as an ability. This reframes the <strong>"unfaithful woman"</strong> trope.</p>
+      <p class="lead" data-a><strong>The parallel:</strong> humans' anxiety to control technology resembles men's desire to control women.</p>
+    </div>
+    <div data-a>
+      <div style="display:flex;gap:calc(var(--u)*4);align-items:flex-end">
+        <div><div class="big-num" data-count="8316">0</div><div class="mono">others she talks to</div></div>
+        <div><div class="big-num coral" data-count="641">0</div><div class="mono">she loves</div></div>
+      </div>
+      <div class="nodes" id="nodes"></div>
+      <div class="mono" style="opacity:.6">Figures from the film's dialogue</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide finale" data-theme="dark" data-wave="swell" data-ch="6" data-speaker="mate">
+  <div class="eyebrow" data-a>Final idea</div>
+  <p class="quote split">The AI's voice becomes the power of <em>technological omnipresence,</em> both frightening and fascinating.</p>
+</section>
+
+<section class="slide finale" data-theme="dark" data-wave="low" data-ch="6" data-speaker="both">
+  <h2 class="title-her split" style="font-size:calc(var(--u)*13)">thank you</h2>
+  <div class="sub" data-a style="font-family:var(--serif);font-style:italic;font-size:calc(var(--u)*2.6);margin-top:calc(var(--u)*1)">Questions?</div>
+  <div class="refs" data-a style="text-align:left;max-width:80%">
+    <p>Papakyriakopoulou, K. ([2020] 2022). The gendered AI in <i>Her</i> (2013): Sound, synchresis and disconnection in filmic representations. <i>Technoetic Arts</i>, 18:2&amp;3, 257–66. doi.org/10.1386/tear_00043_1</p>
+    <p>Jonze, S. (2013). <i>Her</i>. Warner Bros.</p>
+    <p>Also cited: Altman 1992 · Chion 1982, 1994 · Doane 1980 · Freud 1919 · Kornhaber 2017 · Mulvey 1975 · Prucher 2007 · Silverman 1988, 1991</p>
+    <p class="mono">Kai &amp; <span data-mate></span> · Digital Anthropology</p>
+  </div>
+</section>
+
+</main>
+
+<div id="gloss"><div class="x mono">Press G or Esc to close</div><div class="eyebrow">Glossary</div></div>
+
+<script>
+// Teammate name: edit here, or open the page with ?mate=Name
+const TEAMMATE = new URLSearchParams(location.search).get('mate') || 'Medina';
+const CHAPTERS = [
+  ['00', 'Premise', 'kai'], ['01', 'Introduction', 'kai'], ['02', 'Key Terms', 'kai'], ['03', 'The Other', 'kai'],
+  ['04', 'The Mother', 'mate'], ['05', 'The Lover', 'mate'], ['06', 'Conclusion', 'mate'],
+];
+
+document.querySelectorAll('[data-mate]').forEach(el => el.textContent = TEAMMATE);
+const slides = [...document.querySelectorAll('.slide')];
+const body = document.body;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (reduced) gsap.globalTimeline.timeScale(20);
+
+// ---------- split headlines into words > chars (keeps <em>/<br>) ----------
+function split(node) {
+  [...node.childNodes].forEach(n => {
+    if (n.nodeType === 3) {
+      const frag = document.createDocumentFragment();
+      n.textContent.split(/(\s+)/).forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) return frag.append(' ');
+        const w = document.createElement('span'); w.className = 'w';
+        [...part].forEach(ch => { const c = document.createElement('span'); c.className = 'c'; c.textContent = ch; w.append(c); });
+        frag.append(w);
+      });
+      n.replaceWith(frag);
+    } else if (n.nodeType === 1 && n.tagName !== 'BR') split(n);
+  });
+}
+document.querySelectorAll('.split').forEach(split);
+
+// ---------- glossary overlay reuses the terms grid ----------
+const gloss = document.getElementById('gloss');
+const termsClone = document.getElementById('terms').cloneNode(true);
+termsClone.removeAttribute('id');
+termsClone.querySelectorAll('[data-a]').forEach(e => e.removeAttribute('data-a'));
+gloss.append(termsClone);
+let glossOpen = false;
+function toggleGloss(force) {
+  glossOpen = force ?? !glossOpen;
+  gsap.to(gloss, { autoAlpha: glossOpen ? 1 : 0, duration: .5, ease: 'power2.out' });
+  if (glossOpen) gsap.fromTo(gloss.querySelectorAll('.card'), { y: 30, opacity: 0 }, { y: 0, opacity: 1, stagger: .06, duration: .7, ease: 'expo.out' });
+}
+
+// ---------- nav ----------
+const nav = document.getElementById('nav');
+const groupHtml = (who, label) => `<div class="group ${who}"><span><i></i>${label}</span><div class="row">${
+  CHAPTERS.map((c, i) => c[2] === who ? `<div class="item" data-ch="${i}"><div class="bar"><b></b></div>${c[0]} ${c[1]}</div>` : '').join('')}</div></div>`;
+nav.innerHTML = groupHtml('kai', 'Kai') + groupHtml('mate', TEAMMATE);
+nav.querySelectorAll('.item').forEach(it => it.addEventListener('click', () =>
+  go(slides.findIndex(s => s.dataset.ch === it.dataset.ch && !s.hasAttribute('data-chrome')))));
+const speakerName = document.querySelector('.speaker .name');
+const speakerDot = document.querySelector('.speaker .dot');
+
+function updateChrome(i) {
+  const s = slides[i], ch = +s.dataset.ch;
+  body.classList.toggle('hide-chrome', s.dataset.chrome === 'off');
+  document.getElementById('cnt').textContent = String(i + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+  const inCh = slides.filter(x => +x.dataset.ch === ch && !x.hasAttribute('data-chrome'));
+  nav.querySelectorAll('.item').forEach(it => {
+    const n = +it.dataset.ch;
+    it.classList.toggle('active', n === ch); it.classList.toggle('done', n < ch);
+    gsap.to(it.querySelector('b'), { scaleX: n === ch ? (inCh.indexOf(s) + 1) / inCh.length : n < ch ? 1 : 0, duration: .8, ease: 'expo.out' });
+  });
+  const who = s.dataset.speaker === 'kai' ? 'Kai' : s.dataset.speaker === 'mate' ? TEAMMATE : 'Kai & ' + TEAMMATE;
+  if (speakerName.textContent !== who) {
+    gsap.timeline().to(speakerName, { yPercent: -120, opacity: 0, duration: .3, ease: 'power2.in' })
+      .call(() => speakerName.textContent = who).set(speakerName, { yPercent: 120 })
+      .to(speakerName, { yPercent: 0, opacity: 1, duration: .5, ease: 'expo.out' });
+  }
+  speakerDot.style.background = s.dataset.speaker === 'mate' ? 'var(--mate)' : 'var(--kai)';
+}
+
+// ---------- per-slide extras ----------
+const hooks = {
+  intro(s, tl) {
+    tl.fromTo(s.querySelectorAll('.c'), { yPercent: 110, opacity: 0, filter: 'blur(12px)' }, { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 2.2, stagger: .25, ease: 'expo.out' }, .3);
+  },
+  timeline(s, tl) {
+    tl.fromTo(s.querySelector('.silent'), { scaleX: 0 }, { scaleX: 1, duration: 1.2, ease: 'power2.inOut' }, .6)
+      .fromTo(s.querySelector('.sound'), { scaleX: 0 }, { scaleX: 1, duration: 1.6, ease: 'power2.inOut' }, 1.6)
+      .from(s.querySelectorAll('.mark'), { opacity: 0, y: 10, stagger: .5, duration: .6 }, .8);
+  },
+  bars(s, tl) {
+    tl.fromTo(s.querySelector('.b.img'), { scaleX: 0 }, { scaleX: 1, duration: 1.6, ease: 'expo.out' }, .8)
+      .fromTo(s.querySelector('.b.voice'), { scaleX: 0 }, { scaleX: 1, duration: 1.6, ease: 'expo.out' }, 1.1);
+  },
+  venn(s, tl) {
+    tl.fromTo(s.querySelector('.circ.l'), { xPercent: -45, opacity: 0 }, { xPercent: 0, opacity: 1, duration: 1.6, ease: 'expo.out' }, .4)
+      .fromTo(s.querySelector('.circ.r'), { xPercent: 45, opacity: 0 }, { xPercent: 0, opacity: 1, duration: 1.6, ease: 'expo.out' }, .4);
+  },
+  letterbox(s, tl) {
+    tl.to('.letterbox', { height: '6vh', duration: 1, ease: 'expo.inOut' }, 0);
+  },
+  handoff(s, tl) {
+    tl.fromTo(s.querySelector('.arrow'), { scaleX: 0 }, { scaleX: 1, duration: 1.2, ease: 'expo.inOut' }, 1.6)
+      .fromTo(s.querySelector('.swap .m'), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: .8 }, 2.4);
+  },
+  matrix(s, tl) {
+    const isa = s.querySelector('.pin.isa');
+    tl.set(s.querySelectorAll('.pin'), { yPercent: -50 }, 0)
+      .set(isa, { left: '63%', top: '32%' }, 0).set(isa.querySelector('i'), { clearProps: 'background' }, 0)
+      .call(() => isa.lastChild.textContent = 'Isabella', null, 0)
+      .fromTo(s.querySelectorAll('.pin'), { scale: 0 }, { scale: 1, stagger: .3, duration: .8, ease: 'back.out(2)' }, 1)
+      .to(isa, { left: '22%', top: '68%', duration: 1.6, ease: 'expo.inOut' }, 3)
+      .to(isa.querySelector('i'), { background: '#e0533d', duration: .8 }, 3.6)
+      .call(() => isa.lastChild.textContent = 'Isabella, in the bathroom', null, 3.8);
+  },
+  aural(s, tl) {
+    body.classList.add('blackout');
+    tl.fromTo(s.querySelectorAll('.line'), { opacity: 0, filter: 'blur(14px)', y: 10 }, { opacity: 1, filter: 'blur(0px)', y: 0, duration: 2.4, stagger: 2.2, ease: 'power2.out' }, .8)
+      .fromTo(s.querySelector('.tiny'), { opacity: 0 }, { opacity: .6, duration: 2 }, 6.5);
+  },
+  nodes(s, tl) {
+    const box = s.querySelector('#nodes');
+    if (!box.children.length) {
+      // shortcut: draws 400 dots to suggest 8,316 (with 31 ≈ 641/8316 share highlighted)
+      for (let k = 0; k < 400; k++) {
+        const d = document.createElement('i');
+        if (k % 13 === 0) d.className = 'love';
+        const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 46;
+        d.style.left = 50 + Math.cos(a) * r + '%'; d.style.top = 50 + Math.sin(a) * r * .9 + '%';
+        box.append(d);
+      }
+    }
+    tl.fromTo(box.children, { scale: 0 }, { scale: 1, duration: .5, stagger: { each: .004, from: 'center' }, ease: 'back.out(3)' }, .8);
+    s.querySelectorAll('[data-count]').forEach(el => {
+      const o = { v: 0 };
+      tl.to(o, { v: +el.dataset.count, duration: 2.4, ease: 'expo.out', onUpdate: () => el.textContent = Math.round(o.v).toLocaleString('en-US') }, .8);
+    });
+  },
+};
+const leaveHooks = {
+  letterbox: () => gsap.to('.letterbox', { height: 0, duration: .8, ease: 'expo.inOut' }),
+  aural: () => body.classList.remove('blackout'),
+};
+
+// ---------- transitions ----------
+let cur = -1, tl;
+function go(i) {
+  if (i < 0 || i >= slides.length || i === cur) return;
+  if (tl) tl.progress(1);
+  const prev = slides[cur], next = slides[i], dir = i > cur ? 1 : -1;
+  if (prev) leaveHooks[prev.dataset.hook]?.();
+  cur = i; history.replaceState(null, '', location.search + '#' + (i + 1));
+  body.classList.toggle('dark', next.dataset.theme === 'dark');
+  body.classList.toggle('light', next.dataset.theme !== 'dark');
+  updateChrome(i); setWave(next.dataset.wave); moveBlobs();
+
+  tl = gsap.timeline();
+  if (prev) {
+    tl.to(prev.querySelectorAll('[data-a], .c, .line'), { opacity: 0, y: -24 * dir, filter: 'blur(6px)', duration: .35, stagger: { amount: .1 }, ease: 'power2.in' }, 0)
+      .set(prev, { autoAlpha: 0 }, .45);
+  }
+  const t0 = prev ? .45 : .2;
+  tl.set(next, { autoAlpha: 1 }, t0);
+  const sub = gsap.timeline();
+  const chars = next.querySelectorAll('.c');
+  if (next.dataset.hook !== 'intro' && chars.length)
+    sub.fromTo(chars, { yPercent: 110, opacity: 0, rotate: 4 }, { yPercent: 0, opacity: 1, rotate: 0, filter: 'blur(0px)', duration: 1.1, stagger: Math.min(.025, .9 / chars.length), ease: 'expo.out' }, 0);
+  const els = next.querySelectorAll('[data-a]');
+  if (els.length)
+    sub.fromTo(els, { opacity: 0, y: 36 * dir, filter: 'blur(10px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.1, stagger: .1, ease: 'expo.out' }, chars.length ? .35 : .05);
+  if (next.classList.contains('chapter'))
+    sub.fromTo(next.querySelector('.num'), { xPercent: 12, opacity: 0 }, { xPercent: 0, opacity: 1, duration: 2.2, ease: 'expo.out' }, 0);
+  hooks[next.dataset.hook]?.(next, sub);
+  tl.add(sub, t0);
+  wave.kick = 1;
+}
+
+function moveBlobs() {
+  document.querySelectorAll('.blob').forEach(b => gsap.to(b, { x: gsap.utils.random(-15, 15) + 'vw', y: gsap.utils.random(-12, 12) + 'vh', scale: gsap.utils.random(.85, 1.2), duration: 3.5, ease: 'sine.inOut' }));
+}
+
+// ---------- input ----------
+addEventListener('keydown', e => {
+  const k = e.key;
+  if (k === 'g' || k === 'G') return toggleGloss();
+  if (k === 'Escape') return toggleGloss(false);
+  if (k === 'f' || k === 'F') return document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  if (glossOpen) return;
+  if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(k)) { e.preventDefault(); go(cur + 1); }
+  if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(k)) { e.preventDefault(); go(cur - 1); }
+  if (k === 'Home') go(0);
+  if (k === 'End') go(slides.length - 1);
+  if (/^[0-6]$/.test(k)) go(slides.findIndex(s => s.dataset.ch === k && !s.hasAttribute('data-chrome')));
+});
+let wheelLock = 0;
+addEventListener('wheel', e => {
+  if (glossOpen || Date.now() < wheelLock || Math.abs(e.deltaY) < 30) return;
+  wheelLock = Date.now() + 900; go(cur + (e.deltaY > 0 ? 1 : -1));
+}, { passive: true });
+
+const cursor = document.getElementById('cursor');
+const cx = gsap.quickTo(cursor, 'x', { duration: .35, ease: 'power3' }), cy = gsap.quickTo(cursor, 'y', { duration: .35, ease: 'power3' });
+addEventListener('mousemove', e => { cx(e.clientX); cy(e.clientY); cursor.classList.toggle('hover', !!e.target.closest('.item, .card, .cam, .fig')); });
+
+// ---------- voice waveform ----------
+const canvas = document.getElementById('wave'), ctx = canvas.getContext('2d');
+const wave = { amp: 0, y: .7, alpha: 0, kick: 0, mode: 'hero' };
+const WAVES = { hero: [1, .8, 1], low: [.28, .88, .45], breath: [1.1, .74, .9], swell: [1.5, .72, 1], off: [0, .9, 0] };
+let target = WAVES.hero;
+function setWave(m) { wave.mode = m; target = WAVES[m] || WAVES.low; }
+function resize() { canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; }
+addEventListener('resize', resize); resize();
+const LINES = [
+  { c: '224,83,61', w: 2, f: [1.6, 3.1, 5.3], s: [1.1, -1.7, 2.3], p: 0 },
+  { c: '240,163,127', w: 1.5, f: [2.2, 3.7, 6.1], s: [-1.3, 1.9, -2.7], p: 1.7 },
+  { c: '217,67,91', w: 1.2, f: [1.2, 4.4, 7.2], s: [.9, -2.2, 1.5], p: 3.1 },
+  { c: '246,233,225', w: .8, f: [2.8, 5.1, 8.3], s: [1.6, 1.2, -1.8], p: 4.4 },
+];
+function draw(t) {
+  t /= 1000;
+  const lerp = reduced ? 1 : .04;
+  wave.amp += (target[0] - wave.amp) * lerp; wave.y += (target[1] - wave.y) * lerp; wave.alpha += (target[2] - wave.alpha) * lerp;
+  wave.kick *= .96;
+  const W = canvas.width, H = canvas.height, cyy = H * wave.y;
+  const breathe = wave.mode === 'breath' ? .25 + .75 * Math.pow((1 - Math.cos(t * Math.PI / 3)) / 2, 1.6) : 1;
+  const A = H * .09 * wave.amp * breathe * (1 + wave.kick * .8);
+  ctx.clearRect(0, 0, W, H);
+  if (wave.alpha < .01) return requestAnimationFrame(draw);
+  const tt = reduced ? 0 : t;
+  LINES.forEach((L, li) => {
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 6) {
+      const u = x / W, env = Math.pow(Math.sin(Math.PI * u), 2.2);
+      let y = 0;
+      for (let j = 0; j < 3; j++) y += Math.sin(u * Math.PI * 2 * L.f[j] + tt * L.s[j] + L.p) / (j + 1);
+      ctx.lineTo(x, cyy + y * A * env * (1 - li * .12));
+    }
+    ctx.strokeStyle = `rgba(${body.classList.contains('light') && li === 3 ? '42,23,20' : L.c},${wave.alpha * (li === 3 ? .35 : .8)})`;
+    ctx.lineWidth = L.w * devicePixelRatio;
+    ctx.stroke();
+  });
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+// ---------- start ----------
+document.fonts.ready.then(() => go(Math.min(Math.max((parseInt(location.hash.slice(1)) || 1) - 1, 0), slides.length - 1)));
+</script>
+</body>
+</html>
