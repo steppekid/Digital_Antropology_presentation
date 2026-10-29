@@ -322,7 +322,6 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 300; }
 #gloss { position: fixed; inset: 0; z-index: 80; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(18px); display: flex; flex-direction: column; justify-content: center; padding: 0 calc(var(--u) * 9); visibility: hidden; opacity: 0; }
 #gloss .x { position: absolute; top: calc(var(--u) * 3); right: calc(var(--u) * 4); }
 
-@media (prefers-reduced-motion: reduce) { .grain, .pulse, .drift, .ripple, .look, .jitter, .breath, .omni .ring { animation: none; } .ripple, .omni .ring { opacity: .6; } }
 </style>
 </head>
 <body class="dark hide-chrome">
@@ -905,8 +904,6 @@ const CHAPTERS = [
 document.querySelectorAll('[data-mate]').forEach(el => el.textContent = TEAMMATE);
 const slides = [...document.querySelectorAll('.slide')];
 const body = document.body;
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-if (reduced) gsap.globalTimeline.timeScale(20);
 
 // ---------- split headlines into words > chars (keeps <em>/<br>) ----------
 function split(node) {
@@ -1106,23 +1103,25 @@ const LINES = [
   { c: '217,67,91', w: 1.2, f: [1.2, 4.4, 7.2], s: [.9, -2.2, 1.5], p: 3.1 },
   { c: '246,233,225', w: .8, f: [2.8, 5.1, 8.3], s: [1.6, 1.2, -1.8], p: 4.4 },
 ];
+let last = 0;
 function draw(t) {
+  const dt = Math.min((t - last) / 16.67, 4); last = t;
   t /= 1000;
-  const lerp = reduced ? 1 : .04;
+  // per-frame easing scaled by dt so 60Hz and 120Hz screens move at the same speed
+  const lerp = 1 - Math.pow(.96, dt);
   wave.amp += (target[0] - wave.amp) * lerp; wave.y += (target[1] - wave.y) * lerp; wave.alpha += (target[2] - wave.alpha) * lerp;
-  wave.kick *= .96;
+  wave.kick *= Math.pow(.96, dt);
   const W = canvas.width, H = canvas.height, cyy = H * wave.y;
   const breathe = wave.mode === 'breath' ? .25 + .75 * Math.pow((1 - Math.cos(t * Math.PI / 3)) / 2, 1.6) : 1;
   const A = H * .09 * wave.amp * breathe * (1 + wave.kick * .8);
   ctx.clearRect(0, 0, W, H);
   if (wave.alpha < .01) return requestAnimationFrame(draw);
-  const tt = reduced ? 0 : t;
   LINES.forEach((L, li) => {
     ctx.beginPath();
     for (let x = 0; x <= W; x += 6) {
       const u = x / W, env = Math.pow(Math.sin(Math.PI * u), 2.2);
       let y = 0;
-      for (let j = 0; j < 3; j++) y += Math.sin(u * Math.PI * 2 * L.f[j] + tt * L.s[j] + L.p) / (j + 1);
+      for (let j = 0; j < 3; j++) y += Math.sin(u * Math.PI * 2 * L.f[j] + t * L.s[j] + L.p) / (j + 1);
       ctx.lineTo(x, cyy + y * A * env * (1 - li * .12));
     }
     ctx.strokeStyle = `rgba(${body.classList.contains('light') && li === 3 ? '42,23,20' : L.c},${wave.alpha * (li === 3 ? .35 : .8)})`;
